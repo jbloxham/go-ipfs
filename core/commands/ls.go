@@ -163,13 +163,12 @@ The JSON output contains type information.
 			for linkResult := range linkResults {
 				output := make([]LsObject, len(req.Arguments))
 
-				for i, path := range paths {
-					output[i] = LsObject{
+				for j, path := range paths {
+					output[j] = LsObject{
 						Hash:  path,
 						Links: nil,
 					}
 				}
-				outputLinks := make([]LsLink, 1)
 
 				if linkResult.Err != nil {
 					return linkResult.Err
@@ -179,8 +178,7 @@ The JSON output contains type information.
 				if err != nil {
 					return err
 				}
-				outputLinks[0] = *lsLink
-				output[i].Links = outputLinks
+				output[i].Links = []LsLink{*lsLink}
 				if err = res.Emit(&LsOutput{output}); err != nil {
 					return err
 				}
