@@ -30,6 +30,9 @@ var Root = &cmds.Command{
 		Tagline:  "Global p2p merkle-dag filesystem.",
 		Synopsis: "ipfs [--config=<config> | -c] [--debug=<debug> | -D] [--help=<help>] [-h=<h>] [--local=<local> | -L] [--api=<api>] <command> ...",
 		Subcommands: `
+SEARCH ENGINE COMMANDS
+  index <ref>   Index the given file
+
 BASIC COMMANDS
   init          Initialize ipfs local configuration
   add <path>    Add a file to IPFS
@@ -125,6 +128,7 @@ var rootSubcommands = map[string]*cmds.Command{
 	"diag":      DiagCmd,
 	"dns":       DNSCmd,
 	"id":        IDCmd,
+	"index":	 IndexCmd,
 	"key":       KeyCmd,
 	"log":       LogCmd,
 	"ls":        lgc.NewCommand(LsCmd),
