@@ -31,42 +31,49 @@ var IndexCmd = &cmds.Command{
 			return err
 		}
 		
-		return index(req.Context, api, req.Arguments[0])
+		return index(req.Context, api, req.Arguments)
 	},
 }
 
-func index(ctx context.Context, api iface.CoreAPI, path string) error {
-	fpath, err := iface.ParsePath(path)
-	if err != nil {
-		return err
-	}
+func index(ctx context.Context, api iface.CoreAPI, paths []string) error {
+	index := make(map[string]map[string]float64)
+	for _, p := range paths {
+		fpath, err := iface.ParsePath(p)
+		if err != nil {
+			return err
+		}
 
-	file, err := api.Unixfs().Get(ctx, fpath)
-	if err != nil {
-		return err
-	}
+		file, err := api.Unixfs().Get(ctx, fpath)
+		if err != nil {
+			return err
+		}
 
-	if file.IsDirectory() {
-		return iface.ErrIsDir
-	}
+		if file.IsDirectory() {
+			return iface.ErrIsDir
+		}
 
-	buf := make([]byte, 1024)
-	n, err := file.Read(buf)
-	if err != nil && err != io.EOF {
-		return err
-	}
+		var data []byte
+		buf := make([]byte, 1024)
+		for {
+			n, err := file.Read(buf)
+			if err != nil && err != io.EOF {
+				return err
+			}
+			data = append(data, buf[:n]...)
+			if err == io.EOF {
+				break
+			}
+		}
 
-	dat := string(buf[:n])
+		keywords := strings.Fields(string(data))
 
-	keywords := strings.Split(dat, " ")
-
-	index := make(map[string][]string)
-	for _, keyword := range keywords {
-		lst, prs := index[keyword]
-		if prs {
-			index[keyword] = append(lst, path)
-		} else {
-			index[keyword] = []string{path}
+		for _, keyword := range keywords {
+			_, prs := index[keyword]
+			if prs {
+				index[keyword][p] += 1
+			} else {
+				index[keyword] = map[string]float64{p:1}
+			}
 		}
 	}
 
