@@ -1,0 +1,57 @@
+<html>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <!--<script src="https://unpkg.com/ipfs/dist/index.min.js"></script>-->
+        <script src="https://cdn.jsdelivr.net/npm/ipfs/dist/index.min.js"></script>
+    </head>
+    <body>
+        <h1>Let's do some searching</h1>
+        <input type="text" id="search" placeholder="Type in a search...">
+        <button type="submit" id="submit">Submit</button>
+        <h2>Results:</h2>
+        <div id="result"></div>
+        <h2>Index in use:</h2>
+        <div id="index"></div>
+    </body>
+    <script>
+        var index;
+        const node = new Ipfs();
+        const indexHash = 'QmeT3zmkoPaJ8bbQL23NqKJbArTNfVT3RigjC6xZqNaXmg'
+        node.once('ready', () => {
+            console.log('IPFS node is done initializing');
+            console.log('Online status:', node.isOnline() ? 'online' : 'offline')
+            node.files.cat(indexHash, (err, data) => {
+                if (err) return console.error(err);
+                $('#index').html(data.toString());
+                index = JSON.parse(data);
+                console.log(index);
+            });
+        });
+        node.on('error', error => {
+            console.error(error.message);
+        });
+
+        $('#submit').click(function() {
+            const keyword = $('#search').val();
+            if (keyword in index) {
+                results = []
+                for (const result of Object.keys(index[keyword])) {
+                    results.push({
+                        hash: result,
+                        score: index[keyword][result],
+                    });
+                }
+                results.sort((a, b) => b.score - a.score);
+                htmlResults = "";
+                for (const result of results) {
+                    console.log(result);
+                    const gatewayLink = "<a href=\"" + result.hash + "\">gateway link</a>";
+                    htmlResults += result.hash + " " + gatewayLink + " (score=" + result.score + ")\n";
+                }
+                $('#result').html(htmlResults);
+            } else {
+                $('#result').html("No results found :(");
+            }
+        });
+    </script>
+</html>
