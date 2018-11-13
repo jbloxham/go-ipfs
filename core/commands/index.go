@@ -102,6 +102,7 @@ var IndexCmd = &cmds.Command{
 			}
 		},
 	},
+	Type: coreiface.AddEvent{},
 }
 
 func index(ctx context.Context, api iface.CoreAPI, paths []string) (SearchIndex, error) {
