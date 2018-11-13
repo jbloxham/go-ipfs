@@ -19,7 +19,10 @@ import (
 	"gx/ipfs/Qmde5VP1qUkyQXKCfmEUA7bP64V2HAptbJ7phuPp7jXWwg/go-ipfs-cmdkit"
 )
 
-const indexOutChanSize = 8
+const (
+	indexOutChanSize = 8
+	indexHash = "QmZFWi9yg1ocdRpoJzbFRqXSTDPUbvcT5vE3Gm4X5BpRLo"
+)
 
 type SearchIndex map[string]map[string]float64;
 
@@ -106,7 +109,11 @@ var IndexCmd = &cmds.Command{
 }
 
 func index(ctx context.Context, api iface.CoreAPI, paths []string) (SearchIndex, error) {
-	index := make(SearchIndex)
+	index, err := read(ctx, api)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, p := range paths {
 		data, err := readHash(ctx, api, p)
 		if err != nil {
@@ -129,8 +136,18 @@ func index(ctx context.Context, api iface.CoreAPI, paths []string) (SearchIndex,
 }
 
 // Read the old index file as a kv store
-func read(ctx context.Context, api iface.CoreAPI) SearchIndex {
-	return nil
+func read(ctx context.Context, api iface.CoreAPI) (SearchIndex, error) {
+	data, err := readHash(ctx, api, indexHash)
+	if err != nil {
+		return nil, err
+	}
+
+	index := make(SearchIndex)
+	if err = json.Unmarshal(data, &index); err != nil {
+		return nil, err
+	}
+
+	return index, nil
 }
 
 // Write the bytes of the new index file
