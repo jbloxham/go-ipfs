@@ -108,31 +108,9 @@ var IndexCmd = &cmds.Command{
 func index(ctx context.Context, api iface.CoreAPI, paths []string) (SearchIndex, error) {
 	index := make(SearchIndex)
 	for _, p := range paths {
-		fpath, err := iface.ParsePath(p)
+		data, err := readHash(ctx, api, p)
 		if err != nil {
 			return nil, err
-		}
-
-		file, err := api.Unixfs().Get(ctx, fpath)
-		if err != nil {
-			return nil, err
-		}
-
-		if file.IsDirectory() {
-			return nil, iface.ErrIsDir
-		}
-
-		var data []byte
-		buf := make([]byte, 1024)
-		for {
-			n, err := file.Read(buf)
-			if err != nil && err != io.EOF {
-				return nil, err
-			}
-			data = append(data, buf[:n]...)
-			if err == io.EOF {
-				break
-			}
 		}
 
 		keywords := strings.Fields(string(data))
@@ -183,4 +161,35 @@ func write(res cmds.ResponseEmitter, ctx context.Context, api iface.CoreAPI, ind
 	}
 
 	return <-errCh
+}
+
+func readHash(ctx context.Context, api iface.CoreAPI, p string) ([]byte, error) {
+	fpath, err := iface.ParsePath(p)
+	if err != nil {
+		return nil, err
+	}
+
+	file, err := api.Unixfs().Get(ctx, fpath)
+	if err != nil {
+		return nil, err
+	}
+
+	if file.IsDirectory() {
+		return nil, iface.ErrIsDir
+	}
+
+	var data []byte
+	buf := make([]byte, 1024)
+	for {
+		n, err := file.Read(buf)
+		if err != nil && err != io.EOF {
+			return nil, err
+		}
+		data = append(data, buf[:n]...)
+		if err == io.EOF {
+			break
+		}
+	}
+
+	return data, nil
 }
